@@ -11,11 +11,21 @@ import { theme } from "./colors";
 
 export default function App() {
   const [working, setWorking] = useState(true);
-  const [payload, setPayload] = useState("");
+  const [text, setText] = useState("");
+  const [toDo, setToDo] = useState({});
 
   const work = () => setWorking(true);
   const travel = () => setWorking(false);
-  const onChangeText = (event) => setPayload(event);
+  const onChangeText = (event) => setText(event);
+  const addToDo = () => {
+    if (text === "") return;
+    const newTodo = Object.assign({}, toDo, {
+      [Date.now()]: { text, work: working },
+    });
+    setToDo(newTodo);
+    console.log(newTodo);
+    setText("");
+  };
   return (
     <View style={styles.container}>
       <StatusBar style="auto" />
@@ -42,7 +52,8 @@ export default function App() {
         </TouchableOpacity>
       </View>
       <TextInput
-        value={payload}
+        onSubmitEditing={addToDo}
+        value={text}
         onChangeText={onChangeText}
         returnKeyType="done"
         placeholder={working ? "Add a To Do" : "Where do you wnat to go?"}
