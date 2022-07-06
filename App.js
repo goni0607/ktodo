@@ -1,6 +1,7 @@
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,6 +11,7 @@ import {
 } from "react-native";
 import { theme } from "./colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Fontisto } from "@expo/vector-icons";
 
 export default function App() {
   const [working, setWorking] = useState(true);
@@ -52,6 +54,26 @@ export default function App() {
     storeData(newTodo);
     setText("");
   };
+
+  const deleteData = (key) => {
+    const newTodo = { ...toDo };
+    delete newTodo[key];
+    setToDo(newTodo);
+    storeData(newTodo);
+  };
+
+  const deleteToDo = (key) => {
+    Alert.alert("Remove to do", "Are you delete this to do?", [
+      { text: "Cencel" },
+      {
+        text: "OK",
+        onPress: () => {
+          deleteData(key);
+        },
+      },
+    ]);
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -92,6 +114,9 @@ export default function App() {
           .map((key) => (
             <View style={styles.toDo} key={key}>
               <Text style={styles.toDoText}>{toDo[key].text}</Text>
+              <TouchableOpacity onPress={() => deleteToDo(key)}>
+                <Fontisto name="trash" size={22} color={theme.colorGray} />
+              </TouchableOpacity>
             </View>
           ))}
       </ScrollView>
@@ -126,6 +151,9 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   toDo: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 20,
     backgroundColor: "#333",
