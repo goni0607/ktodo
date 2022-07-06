@@ -1,19 +1,54 @@
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { theme } from "./colors";
 
 export default function App() {
+  const [working, setWorking] = useState(true);
+  const [payload, setPayload] = useState("");
+
+  const work = () => setWorking(true);
+  const travel = () => setWorking(false);
+  const onChangeText = (event) => setPayload(event);
   return (
     <View style={styles.container}>
       <StatusBar style="auto" />
       <View style={styles.header}>
-        <TouchableOpacity>
-          <Text style={styles.btnText}>Work</Text>
+        <TouchableOpacity onPress={work}>
+          <Text
+            style={{
+              ...styles.btnText,
+              color: working ? theme.color : theme.colorGray,
+            }}
+          >
+            Work
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity>
-          <Text style={styles.btnText}>Travel</Text>
+        <TouchableOpacity onPress={travel}>
+          <Text
+            style={{
+              ...styles.btnText,
+              color: working ? theme.colorGray : theme.color,
+            }}
+          >
+            Travel
+          </Text>
         </TouchableOpacity>
       </View>
+      <TextInput
+        value={payload}
+        onChangeText={onChangeText}
+        returnKeyType="done"
+        placeholder={working ? "Add a To Do" : "Where do you wnat to go?"}
+        placeholderTextColor="#707070"
+        style={styles.input}
+      />
     </View>
   );
 }
@@ -30,8 +65,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   btnText: {
-    color: theme.color,
     fontSize: theme.tabFontSize,
     fontWeight: "600",
+  },
+  input: {
+    backgroundColor: "white",
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderRadius: 10,
+    marginTop: 20,
+    fontSize: 20,
   },
 });
