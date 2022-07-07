@@ -11,25 +11,30 @@ import {
 } from "react-native";
 import { theme } from "./colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Fontisto } from "@expo/vector-icons";
+import Todo from "./components/Todo";
+import { styles } from "./style";
 
 export default function App() {
+  const KEY_TODO = "@todos";
+  const KEY_WORK = "@work";
   const [working, setWorking] = useState(true);
   const [text, setText] = useState("");
   const [toDo, setToDo] = useState({});
 
-  const work = () => setWorking(true);
-  const travel = () => setWorking(false);
+  const work = (state) => {
+    setWorking(state);
+    storeData(KEY_WORK, state.toString(), false);
+  };
   const onChangeText = (event) => setText(event);
 
   useEffect(() => {
     getData();
   }, []);
 
-  const storeData = async (toDos) => {
+  const storeData = async (key, data, isObject = true) => {
     try {
-      const jv = JSON.stringify(toDos);
-      await AsyncStorage.setItem("@todos", jv);
+      const sd = isObject ? JSON.stringify(data) : data;
+      await AsyncStorage.setItem(key, sd);
     } catch (e) {
       console.log(e);
     }
@@ -37,8 +42,10 @@ export default function App() {
 
   const getData = async () => {
     try {
-      const jv = await AsyncStorage.getItem("@todos");
-      setToDo(jv != null ? JSON.parse(jv) : {});
+      const t = await AsyncStorage.getItem(KEY_TODO);
+      setToDo(t != null ? JSON.parse(t) : {});
+      const w = await AsyncStorage.getItem(KEY_WORK);
+      setWorking(w != null ? w === "true" : true);
     } catch (e) {
       console.log(e);
     }
@@ -49,9 +56,12 @@ export default function App() {
     // const newTodo = Object.assign({}, toDo, {
     //   [Date.now()]: { text, work: working },
     // });
-    const newTodo = { ...toDo, [Date.now()]: { text, work: working } };
+    const newTodo = {
+      ...toDo,
+      [Date.now()]: { text, work: working, done: false },
+    };
     setToDo(newTodo);
-    storeData(newTodo);
+    storeData(KEY_TODO, newTodo);
     setText("");
   };
 
@@ -59,7 +69,7 @@ export default function App() {
     const newTodo = { ...toDo };
     delete newTodo[key];
     setToDo(newTodo);
-    storeData(newTodo);
+    storeData(KEY_TODO, newTodo);
   };
 
   const deleteToDo = (key) => {
@@ -74,11 +84,24 @@ export default function App() {
     ]);
   };
 
+  const updateToDo = (key, text) => {
+    const newTodo = { ...toDo, [key]: { text, work: working } };
+    setToDo(newTodo);
+    storeData(KEY_TODO, newTodo);
+  };
+
+  const doneToDo = (key, done) => {
+    const newTodo = { ...toDo };
+    newTodo[key].done = !done;
+    setToDo(newTodo);
+    storeData(KEY_TODO, newTodo);
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
       <View style={styles.header}>
-        <TouchableOpacity onPress={work}>
+        <TouchableOpacity onPress={() => work(true)}>
           <Text
             style={{
               ...styles.btnText,
@@ -88,7 +111,7 @@ export default function App() {
             Work
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={travel}>
+        <TouchableOpacity onPress={() => work(false)}>
           <Text
             style={{
               ...styles.btnText,
@@ -112,56 +135,17 @@ export default function App() {
         {Object.keys(toDo)
           .filter((key) => toDo[key].work === working)
           .map((key) => (
-            <View style={styles.toDo} key={key}>
-              <Text style={styles.toDoText}>{toDo[key].text}</Text>
-              <TouchableOpacity onPress={() => deleteToDo(key)}>
-                <Fontisto name="trash" size={22} color={theme.colorGray} />
-              </TouchableOpacity>
-            </View>
+            <Todo
+              key={key}
+              id={key}
+              text={toDo[key].text}
+              done={toDo[key].done}
+              updateToDo={updateToDo}
+              deleteToDo={deleteToDo}
+              doneToDo={doneToDo}
+            />
           ))}
       </ScrollView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.background,
-    paddingHorizontal: "2%",
-  },
-  header: {
-    marginTop: 100,
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  btnText: {
-    fontSize: theme.tabFontSize,
-    fontWeight: "600",
-  },
-  input: {
-    backgroundColor: "white",
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderRadius: 10,
-    marginTop: 20,
-    fontSize: 20,
-  },
-  toDoList: {
-    marginTop: 20,
-  },
-  toDo: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    backgroundColor: "#333",
-    borderRadius: 10,
-    marginBottom: 10,
-  },
-  toDoText: {
-    color: theme.color,
-    fontSize: 18,
-  },
-});
